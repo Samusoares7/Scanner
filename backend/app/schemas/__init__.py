@@ -1,0 +1,1 @@
+# Scanner-Pro schemas package
