@@ -58,3 +58,26 @@ def get_scan_by_id(id: int, db: Session = Depends(get_db), current_user: str = D
         "results": json.loads(scan.results),
         "created_at": scan.created_at
     }
+
+from fastapi.responses import StreamingResponse
+from app.pdf_report import generate_pdf_report
+from io import BytesIO
+
+@router.get("/report/pdf")
+def export_pdf(db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    scans = db.query(ScanResult).all()
+    scans_data = [
+        {
+            "target": s.target,
+            "total_open_ports": s.total_open_ports,
+            "results": json.loads(s.results),
+            "created_at": str(s.created_at)
+        }
+        for s in scans
+    ]
+    pdf_bytes = generate_pdf_report(scans_data)
+    return StreamingResponse(
+        BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=scanner-pro-report.pdf"}
+    )

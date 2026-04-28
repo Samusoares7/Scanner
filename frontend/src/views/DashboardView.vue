@@ -2,6 +2,9 @@
   <div class="container">
     <div class="header">
       <h1>🔐 Scanner-Pro</h1>
+      <button class="btn-report" @click="exportPDF" :disabled="exporting">
+        {{ exporting ? 'Gerando...' : '📄 Exportar Relatório PDF' }}
+      </button>
       <div class="nav">
         <router-link to="/dashboard">Dashboard</router-link>
         <router-link to="/">Scanner</router-link>
@@ -78,7 +81,28 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { getScans } from '../services/api'
+import { getScans, downloadReport } from '../services/api'
+
+const exporting = ref(false)
+
+const exportPDF = async () => {
+  exporting.value = true
+  try {
+    const response = await downloadReport()
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'scanner-pro-report.pdf')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (e) {
+    alert('Erro ao gerar relatório')
+  } finally {
+    exporting.value = false
+  }
+}
 
 const router = useRouter()
 const scans = ref([])
@@ -160,4 +184,8 @@ th { color: #8b949e; font-size: 0.85rem; text-transform: uppercase; }
 .critical { color: #f85149; }
 .attention { color: #e3b341; }
 .common { color: #3fb950; }
+
+.btn-report { padding: 10px 20px; background: #1f6feb; border: none; border-radius: 8px; color: white; font-size: 0.9rem; cursor: pointer; }
+.btn-report:hover { background: #388bfd; }
+.btn-report:disabled { background: #1c3a5e; cursor: not-allowed; }
 </style>
