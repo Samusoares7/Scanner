@@ -46,6 +46,12 @@ def get_scans(db: Session = Depends(get_db), current_user: str = Depends(get_cur
         for s in scans
     ]
 
+@router.delete("/scans")
+def clear_scans(db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    db.query(ScanResult).delete()
+    db.commit()
+    return {"message": "Histórico limpo com sucesso"}
+
 @router.get("/scans/{id}")
 def get_scan_by_id(id: int, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     scan = db.query(ScanResult).filter(ScanResult.id == id).first()
