@@ -20,16 +20,24 @@
 
     <div v-if="result" class="result-box">
       <h2>Resultado — {{ result.target }}</h2>
-      <p>Portas abertas: <strong>{{ result.total_open_ports }}</strong></p>
+      <p>Portas abertas: <strong>{{ result.total_open_ports }}</strong> | Total de findings: <strong>{{ result.total_findings }}</strong></p>
       <table>
         <thead>
-          <tr><th>Porta</th><th>Serviço</th><th>Risco</th></tr>
+          <tr>
+            <th>Porta</th>
+            <th>Serviço</th>
+            <th>Risco</th>
+            <th>Contexto</th>
+            <th>Banner</th>
+          </tr>
         </thead>
         <tbody>
-          <tr v-for="port in result.results" :key="port.port" :class="port.risk.toLowerCase()">
+          <tr v-for="port in result.results" :key="port.port + port.service" :class="port.risk.toLowerCase()">
             <td>{{ port.port }}</td>
             <td>{{ port.service }}</td>
             <td>{{ port.risk }}</td>
+            <td class="context">{{ port.context || '—' }}</td>
+            <td class="banner">{{ port.banner || '—' }}</td>
           </tr>
         </tbody>
       </table>
@@ -92,4 +100,6 @@ th { color: #8b949e; font-size: 0.85rem; text-transform: uppercase; }
 tr.critical td { color: #f85149; }
 tr.attention td { color: #e3b341; }
 tr.common td { color: #3fb950; }
+.context { font-size: 0.85rem; color: #8b949e; max-width: 300px; }
+.banner { font-size: 0.8rem; color: #8b949e; font-family: monospace; }
 </style>
