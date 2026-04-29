@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000'
+  baseURL: 'https://scanner-pro-ti44.onrender.com'
 })
 
 api.interceptors.request.use(config => {
@@ -22,6 +22,5 @@ export const login = (username, password) => {
 export const startScan = (target) => api.post('/scan', { target })
 export const getScans = () => api.get('/scans')
 export const getScanById = (id) => api.get(`/scans/${id}`)
-export const clearScans = () => api.delete('/scans')
 export const downloadReport = () =>
   api.get('/report/pdf', { responseType: 'blob' })

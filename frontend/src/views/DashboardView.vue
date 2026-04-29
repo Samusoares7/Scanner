@@ -134,7 +134,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { getScans, clearScans, downloadReport } from '../services/api'
+import axios from 'axios'
+import { getScans, downloadReport } from '../services/api'
 
 const router = useRouter()
 const scans = ref([])
@@ -201,8 +202,11 @@ const formatDate = (dt) => {
 const confirmClear = () => { showConfirm.value = true }
 
 const clearHistory = async () => {
+  const token = localStorage.getItem('token')
   try {
-    await clearScans()
+    await axios.delete('https://scanner-pro-ti44.onrender.com/scans', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
     scans.value = []
     showConfirm.value = false
   } catch (e) {
