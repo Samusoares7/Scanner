@@ -15,9 +15,9 @@
 
 ## 📌 Sobre o Projeto
 
-Scanner-Pro é uma ferramenta web de auditoria de segurança focada em ambientes próprios. Foi desenvolvida pensando em um problema real: desenvolvedores que constroem sistemas rapidamente — muitas vezes com auxílio de IA — e acabam deixando brechas de configuração que um atacante poderia explorar.
+Scanner-Pro é uma ferramenta web de auditoria de segurança focada em ambientes próprios. Foi desenvolvida pensando em um problema real: desenvolvedores que constroem sistemas rapidamente muitas vezes com auxílio de IA e acabam deixando brechas de configuração que um atacante poderia explorar.
 
-Diferente de ferramentas como Nmap, o Scanner-Pro não exige conhecimento técnico avançado. O resultado é apresentado em português, com contexto explicativo e classificação visual de risco — tornando a auditoria de segurança acessível para qualquer desenvolvedor.
+Diferente de ferramentas como Nmap, o Scanner-Pro não exige conhecimento técnico avançado. O resultado é apresentado em português, com contexto explicativo e classificação visual de risco tornando a auditoria de segurança acessível para qualquer desenvolvedor.
 
 ---
 
@@ -174,7 +174,7 @@ Scanner-Pro/
 ---
 
 ## ⚠️ Uso Responsável
-Scanner-Pro foi desenvolvido para auditoria de ambientes próprios ou com autorização explícita do proprietário. A varredura de sistemas sem autorização é crime no Brasil — Lei 12.737/2012 (Lei Carolina Dieckmann).
+Scanner-Pro foi desenvolvido para auditoria de ambientes próprios ou com autorização explícita do proprietário. A varredura de sistemas sem autorização é crime no Brasil Lei 12.737/2012 (Lei Carolina Dieckmann).
 Use apenas em:
 1. Servidores e infraestrutura própria
 2. Ambientes de laboratório e estudo
@@ -183,19 +183,9 @@ Use apenas em:
 ---
 
 ## 👨‍💻 Autor
-**Samuel Enzo**
+**Samuel Soares**
 
 - GitHub: [@Samusoares7](https://github.com/Samusoares7)
 - LinkedIn: [samuele-soares](https://linkedin.com/in/samuele-soares)
 
 ---
-
-## 📌 Status do Projeto
-Scanner-Pro está em desenvolvimento ativo. Funcionalidades planejadas para próximas versões:
-
-- [ ] Score de segurança geral (0-100)
-- [ ] Resumo em linguagem simples por alvo
-- [ ] Comparação entre scans do mesmo alvo ao longo do tempo
-- [ ] Modo auditoria rápida com checklist visual
-- [ ] Suporte a múltiplos usuários
-- [ ] Notificações por email ao detectar findings críticos
