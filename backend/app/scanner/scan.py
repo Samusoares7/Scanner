@@ -2,10 +2,9 @@ import socket
 import concurrent.futures
 import urllib.request
 import urllib.error
-import urllib.parse
 import ssl
-import hashlib
 import uuid
+import hashlib
 from app.scanner.ports import PORTS, HTTP_CHECKS, HTTP_SECURITY_HEADERS
 
 def get_ssl_context():
@@ -15,136 +14,94 @@ def get_ssl_context():
     return ctx
 
 def make_request(url: str, timeout: int = 3) -> dict | None:
-    """Faz requisição HTTP/HTTPS e retorna dados da resposta."""
+    """Faz requisição SEM seguir redirects — importante para detectar falsos positivos."""
     try:
-        ctx = get_ssl_context() if url.startswith("https") else None
+        is_https = url.startswith("https")
+        ctx = get_ssl_context() if is_https else None
+
+        class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
+
+        opener = urllib.request.build_opener(NoRedirectHandler())
+        if ctx:
+            opener = urllib.request.build_opener(
+                NoRedirectHandler(),
+                urllib.request.HTTPSHandler(context=ctx)
+            )
+
         req = urllib.request.Request(
             url,
-            headers={
-                "User-Agent": "Mozilla/5.0 (compatible; SecurityScanner/1.0)",
-                "Accept": "*/*"
-            }
+            headers={"User-Agent": "Mozilla/5.0 (compatible; SecurityAudit/1.0)"}
         )
-        response = urllib.request.urlopen(req, timeout=timeout, context=ctx)
-        content = response.read(4096)
-        return {
-            "status": response.status,
-            "content_length": len(content),
-            "content_hash": hashlib.md5(content).hexdigest(),
-            "content": content.decode(errors="ignore"),
-            "headers": dict(response.headers),
-            "protocol": "https" if url.startswith("https") else "http",
-            "blocked": False
-        }
-    except urllib.error.HTTPError as e:
-        content = b""
+
         try:
-            content = e.read(4096)
-        except:
-            pass
-        return {
-            "status": e.code,
-            "content_length": len(content),
-            "content_hash": hashlib.md5(content).hexdigest(),
-            "content": content.decode(errors="ignore"),
-            "headers": dict(e.headers) if e.headers else {},
-            "protocol": "https" if url.startswith("https") else "http",
-            "blocked": False
-        }
-    except Exception as e:
-        error_str = str(e).lower()
-        blocked = any(k in error_str for k in ["ssl", "certificate", "timeout", "forbidden", "reset"])
-        return {
-            "status": 0,
-            "content_length": 0,
-            "content_hash": "",
-            "content": "",
-            "headers": {},
-            "protocol": "https" if url.startswith("https") else "http",
-            "blocked": blocked
-        }
+            response = opener.open(req, timeout=timeout)
+            content = response.read(4096)
+            return {
+                "status": response.status,
+                "size": len(content),
+                "hash": hashlib.md5(content).hexdigest(),
+                "headers": dict(response.headers),
+                "ok": True
+            }
+        except urllib.error.HTTPError as e:
+            content = b""
+            try:
+                content = e.read(1024)
+            except:
+                pass
+            return {
+                "status": e.code,
+                "size": len(content),
+                "hash": hashlib.md5(content).hexdigest(),
+                "headers": dict(e.headers) if e.headers else {},
+                "ok": e.code < 400
+            }
+    except:
+        return None
 
-def get_baseline(target: str, port: int) -> dict | None:
+def get_baseline(target: str, port: int, proto: str) -> dict | None:
     """
-    Faz requisição para path aleatório inexistente.
-    Usado para detectar soft 404 — servidor que retorna 200 para qualquer path.
+    Requisição para path aleatório inexistente.
+    Se servidor retornar 200 para isso, é soft 404.
     """
-    random_path = f"/baseline-check-{uuid.uuid4().hex[:12]}"
-    for proto in ["https", "http"]:
-        url = f"{proto}://{target}:{port}{random_path}"
-        result = make_request(url)
-        if result and result["status"] != 0:
-            return result
-    return None
+    random_path = f"/audit-check-{uuid.uuid4().hex[:10]}"
+    url = f"{proto}://{target}:{port}{random_path}"
+    return make_request(url)
 
-def is_false_positive(response: dict, baseline: dict | None) -> bool:
+def detect_active_protocol(target: str, port: int) -> str:
+    """Detecta se o servidor responde em HTTPS ou HTTP."""
+    https_result = make_request(f"https://{target}:{port}/", timeout=3)
+    if https_result and https_result["status"] != 0:
+        return "https"
+    return "http"
+
+def is_soft_404(response: dict, baseline: dict) -> bool:
     """
-    Verifica se o finding é falso positivo comparando com baseline.
-    Retorna True se for falso positivo.
+    Verifica se é soft 404 comparando com baseline.
+    Servidor com soft 404 retorna 200 para qualquer path.
     """
     if baseline is None:
         return False
-
-    # Se baseline também retornou 200, é soft 404
-    if baseline["status"] == 200:
-        # Compara hash do conteúdo — se igual, é falso positivo
-        if response["content_hash"] == baseline["content_hash"]:
+    if baseline["status"] != 200:
+        return False
+    # Mesmo hash → conteúdo idêntico → soft 404
+    if response["hash"] == baseline["hash"]:
+        return True
+    # Tamanho muito próximo (±5%) → provavelmente soft 404
+    if baseline["size"] > 0:
+        diff = abs(response["size"] - baseline["size"]) / baseline["size"]
+        if diff < 0.05:
             return True
-        # Compara tamanho — se muito próximo (±10%), provavelmente falso positivo
-        if baseline["content_length"] > 0:
-            ratio = abs(response["content_length"] - baseline["content_length"]) / baseline["content_length"]
-            if ratio < 0.1:
-                return True
-
     return False
 
-def detect_waf(target: str, port: int) -> dict:
-    """
-    Detecta presença de WAF/CDN tentando HTTPS primeiro.
-    Retorna informações sobre o ambiente detectado.
-    """
-    waf_info = {
-        "detected": False,
-        "type": None,
-        "https_blocked": False,
-        "active_protocol": "http"
-    }
-
-    # Testa HTTPS
-    https_url = f"https://{target}:{port}/"
-    https_result = make_request(https_url, timeout=3)
-
-    if https_result and not https_result["blocked"] and https_result["status"] != 0:
-        waf_info["active_protocol"] = "https"
-        # Verifica headers de WAF conhecidos
-        headers = {k.lower(): v for k, v in https_result["headers"].items()}
-        if "cf-ray" in headers or "cf-cache-status" in headers:
-            waf_info["detected"] = True
-            waf_info["type"] = "Cloudflare"
-        elif "x-sucuri-id" in headers:
-            waf_info["detected"] = True
-            waf_info["type"] = "Sucuri"
-        elif "x-waf" in headers or "x-firewall" in headers:
-            waf_info["detected"] = True
-            waf_info["type"] = "WAF Genérico"
-        elif "server" in headers and "akamai" in headers.get("server", "").lower():
-            waf_info["detected"] = True
-            waf_info["type"] = "Akamai"
-    else:
-        waf_info["https_blocked"] = True
-        waf_info["active_protocol"] = "http"
-        if https_result and https_result["blocked"]:
-            waf_info["detected"] = True
-            waf_info["type"] = "WAF/CDN (HTTPS bloqueado)"
-
-    return waf_info
-
 def scan_port(target: str, port: int, info: dict) -> dict | None:
+    """Testa se porta TCP está aberta."""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(0.5)
-        result = sock.connect_ex((target, port))
-        if result == 0:
+        if sock.connect_ex((target, port)) == 0:
             banner = ""
             try:
                 sock.send(b"HEAD / HTTP/1.0\r\n\r\n")
@@ -157,7 +114,7 @@ def scan_port(target: str, port: int, info: dict) -> dict | None:
                 "service": info["service"],
                 "risk": info["risk"],
                 "context": info["context"],
-                "banner": banner if banner else None,
+                "banner": banner or None,
                 "type": "port"
             }
         sock.close()
@@ -165,66 +122,101 @@ def scan_port(target: str, port: int, info: dict) -> dict | None:
         pass
     return None
 
-def check_http(target: str, port: int, check: dict, baseline: dict | None, waf_info: dict) -> dict | None:
-    """Verifica endpoint HTTP com validação de falsos positivos."""
-    proto = waf_info.get("active_protocol", "http")
-    url = f"{proto}://{target}:{port}{check['path']}"
-    response = make_request(url)
+def run_http_checks(target: str, port: int) -> list:
+    """
+    Roda HTTP checks com validação rigorosa de falsos positivos.
+    Só reporta findings com evidência real.
+    """
+    findings = []
 
-    if not response or response["status"] == 0:
-        return None
+    # Detecta protocolo ativo
+    proto = detect_active_protocol(target, port)
 
-    # Ignora 401, 403, 404 — endpoint protegido ou inexistente
-    if response["status"] in [401, 403, 404]:
-        return None
+    # Obtém baseline para detectar soft 404
+    baseline = get_baseline(target, port, proto)
 
-    # Verifica falso positivo
-    if is_false_positive(response, baseline):
-        return None
+    # Se o próprio baseline falhou, servidor não está respondendo
+    if baseline is None:
+        return findings
 
-    if response["status"] < 400:
-        context = f"Endpoint {check['path']} acessível em {proto.upper()}."
-        if waf_info["detected"]:
-            context += f" (Detectado {waf_info['type']} — resultado pode variar)"
-        return {
-            "port": port,
-            "service": check["label"],
-            "risk": check["risk"],
-            "context": context,
-            "banner": f"HTTP {response['status']}",
-            "type": "http"
-        }
-    return None
+    # Verifica se é soft 404 com path extra para confirmar
+    baseline2 = get_baseline(target, port, proto)
+    soft_404 = False
+    if baseline and baseline2:
+        if baseline["status"] == 200 and baseline2["status"] == 200:
+            if baseline["hash"] == baseline2["hash"]:
+                soft_404 = True
 
-def check_security_headers(target: str, port: int, waf_info: dict) -> list:
-    """Verifica headers de segurança ausentes."""
-    missing = []
-    proto = waf_info.get("active_protocol", "http")
-    url = f"{proto}://{target}:{port}/"
-    response = make_request(url)
+    # HTTP checks — só roda se não for soft 404 confirmado
+    seen_paths = set()
+    for check in HTTP_CHECKS:
+        path = check["path"]
+        if path in seen_paths:
+            continue
+        seen_paths.add(path)
 
-    if not response or response["status"] == 0:
-        return missing
+        url = f"{proto}://{target}:{port}{path}"
+        response = make_request(url)
 
-    headers = {k.lower(): v for k, v in response["headers"].items()}
-    for h in HTTP_SECURITY_HEADERS:
-        if h.lower() not in headers:
-            missing.append({
+        if not response:
+            continue
+
+        # Ignora erros, não encontrados e redirecionamentos
+        if response["status"] in [401, 403, 404, 405, 500, 502, 503]:
+            continue
+
+        # Ignora redirecionamentos — servidor redireciona paths inexistentes
+        if 300 <= response["status"] < 400:
+            redirect_location = response["headers"].get("location", "")
+            baseline_location = baseline["headers"].get("location", "") if baseline else ""
+            # Se redireciona para o mesmo lugar que o baseline → falso positivo
+            if redirect_location == baseline_location:
+                continue
+            # Se redireciona para a raiz ou home → falso positivo
+            if redirect_location in ["/", "/?", "/#", "/home", "/index.html"]:
+                continue
+            # Se o baseline também redireciona → comportamento padrão do servidor
+            if baseline and 300 <= baseline["status"] < 400:
+                continue
+
+        # Verifica falso positivo
+        if soft_404 or is_soft_404(response, baseline):
+            continue
+
+        # Finding válido
+        if response["status"] < 400:
+            findings.append({
                 "port": port,
-                "service": f"Header ausente: {h}",
-                "risk": "ATTENTION",
-                "context": f"O header de segurança '{h}' não está configurado.",
-                "banner": None,
-                "type": "header"
+                "service": check["label"],
+                "risk": check["risk"],
+                "context": f"Endpoint {path} acessível via {proto.upper()} — HTTP {response['status']}.",
+                "banner": f"HTTP {response['status']}",
+                "type": "http"
             })
-    return missing
+
+    # Headers de segurança
+    root_url = f"{proto}://{target}:{port}/"
+    root_response = make_request(root_url)
+    if root_response and root_response["status"] < 400:
+        headers = {k.lower(): v for k, v in root_response["headers"].items()}
+        for h in HTTP_SECURITY_HEADERS:
+            if h.lower() not in headers:
+                findings.append({
+                    "port": port,
+                    "service": f"Header ausente: {h}",
+                    "risk": "ATTENTION",
+                    "context": f"Header de segurança '{h}' não configurado.",
+                    "banner": None,
+                    "type": "header"
+                })
+
+    return findings
 
 def run_scan(target: str) -> dict:
     results = []
     web_ports = []
-    waf_findings = []
 
-    # Scan de portas TCP em paralelo
+    # Scan TCP paralelo
     with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
         futures = {
             executor.submit(scan_port, target, port, info): port
@@ -235,62 +227,16 @@ def run_scan(target: str) -> dict:
             if result:
                 results.append(result)
                 if result["service"] in [
-                    "HTTP", "HTTPS", "HTTP-Alt", "HTTPS-Alt", "HTTP-Dev",
-                    "Node/React", "Flask/Dev", "Vite/Dev", "Angular/Dev"
+                    "HTTP", "HTTPS", "HTTP-Alt", "HTTPS-Alt",
+                    "HTTP-Dev", "Node/React", "Flask/Dev",
+                    "Vite/Dev", "Angular/Dev"
                 ]:
                     web_ports.append(result["port"])
 
-    # HTTP checks nos web ports encontrados
-    if web_ports:
-        for port in web_ports:
-            # Detecta WAF/CDN
-            waf_info = detect_waf(target, port)
-
-            # Adiciona finding de WAF se detectado
-            if waf_info["detected"]:
-                waf_findings.append({
-                    "port": port,
-                    "service": f"WAF/CDN Detectado: {waf_info['type']}",
-                    "risk": "ATTENTION",
-                    "context": "Presença de WAF ou CDN detectada. Resultados de HTTP checks podem ser incompletos ou mascarados.",
-                    "banner": None,
-                    "type": "waf"
-                })
-
-            if waf_info["https_blocked"]:
-                waf_findings.append({
-                    "port": port,
-                    "service": "HTTPS Bloqueado",
-                    "risk": "ATTENTION",
-                    "context": "HTTPS bloqueado pelo servidor ou WAF. Scanner utilizou HTTP como fallback — resultados podem ser imprecisos.",
-                    "banner": None,
-                    "type": "waf"
-                })
-
-            # Obtém baseline para detectar soft 404
-            baseline = get_baseline(target, port)
-
-            # HTTP checks com validação de falsos positivos
-            with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-                http_futures = []
-                for check in HTTP_CHECKS:
-                    http_futures.append(
-                        executor.submit(check_http, target, port, check, baseline, waf_info)
-                    )
-                http_futures.append(
-                    executor.submit(check_security_headers, target, port, waf_info)
-                )
-
-                for future in concurrent.futures.as_completed(http_futures):
-                    result = future.result()
-                    if result:
-                        if isinstance(result, list):
-                            results.extend(result)
-                        else:
-                            results.append(result)
-
-    # Adiciona findings de WAF no início
-    results = waf_findings + results
+    # HTTP checks apenas nos web ports encontrados
+    for port in web_ports:
+        http_findings = run_http_checks(target, port)
+        results.extend(http_findings)
 
     # Ordena por risco
     risk_order = {"CRITICAL": 0, "ATTENTION": 1, "COMMON": 2}
