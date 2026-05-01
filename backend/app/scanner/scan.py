@@ -238,13 +238,24 @@ def run_scan(target: str) -> dict:
         http_findings = run_http_checks(target, port)
         results.extend(http_findings)
 
+    # Deduplica headers — mesmo header não aparece duas vezes
+    seen_headers = set()
+    deduplicated = []
+    for r in results:
+        if r["type"] == "header":
+            key = r["service"]  # ex: "Header ausente: Referrer-Policy"
+            if key in seen_headers:
+                continue
+            seen_headers.add(key)
+        deduplicated.append(r)
+
     # Ordena por risco
     risk_order = {"CRITICAL": 0, "ATTENTION": 1, "COMMON": 2}
-    results.sort(key=lambda x: risk_order.get(x["risk"], 3))
+    deduplicated.sort(key=lambda x: risk_order.get(x["risk"], 3))
 
     return {
         "target": target,
-        "total_open_ports": len([r for r in results if r["type"] == "port"]),
-        "total_findings": len(results),
-        "results": results
+        "total_open_ports": len([r for r in deduplicated if r["type"] == "port"]),
+        "total_findings": len(deduplicated),
+        "results": deduplicated
     }

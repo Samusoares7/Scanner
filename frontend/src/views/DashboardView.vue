@@ -202,8 +202,8 @@ const formatDate = (dt) => {
 const confirmClear = () => { showConfirm.value = true }
 
 const clearHistory = async () => {
-  const token = localStorage.getItem('token')
   try {
+    const token = localStorage.getItem('token')
     await axios.delete('https://scanner-pro-ti44.onrender.com/scans', {
       headers: { Authorization: `Bearer ${token}` }
     })
