@@ -44,6 +44,18 @@ const updateStats = (stats) => {
   --common:         #10b981;
   --text-primary:   #e2e8f0;
   --text-secondary: #64748b;
+
+  /* Global Lovable theme colors */
+  --color-bg:           #060d1f;
+  --color-bg-card:      #0c1528;
+  --color-border:       rgba(255,255,255,0.08);
+  --color-primary:      oklch(0.68 0.18 250);   /* azul elétrico */
+  --color-accent:       oklch(0.72 0.18 195);   /* ciano */
+  --color-critical:     #ef4444;
+  --color-attention:    #f59e0b;
+  --color-common:       #10b981;
+  --color-foreground:   #e2e8f0;
+  --color-muted:        #64748b;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
