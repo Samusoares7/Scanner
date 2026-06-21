@@ -4,7 +4,7 @@
     <div class="sidebar-logo">
       <div class="logo-icon">🛡️</div>
       <div class="logo-text">
-        <span class="logo-name">Scanner-Pro</span>
+        <span class="logo-name">Scanner</span>
         <span class="logo-sub">Security Operations Center</span>
       </div>
     </div>

@@ -15,7 +15,7 @@
           <input
             v-model="target"
             class="target-input"
-            placeholder="https://alvo.com ou 192.168.1.1"
+            placeholder="Digite o IP "
             @keyup.enter="runScan"
           />
         </div>

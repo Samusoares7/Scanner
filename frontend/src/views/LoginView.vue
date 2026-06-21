@@ -15,7 +15,7 @@
             <div class="brand-icon">🛡️</div>
           </div>
           <div class="brand-text">
-            <div class="brand-name">Scanner-Pro</div>
+            <div class="brand-name">Scanner</div>
             <div class="brand-sub">painel de segurança ofensiva</div>
           </div>
         </div>
