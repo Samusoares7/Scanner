@@ -15,9 +15,9 @@
 
 ## 📌 Sobre o Projeto
 
-Scanner-Pro é uma ferramenta web de auditoria de segurança focada em ambientes próprios. Foi desenvolvida pensando em um problema real: desenvolvedores que constroem sistemas rapidamente muitas vezes com auxílio de IA e acabam deixando brechas de configuração que um atacante poderia explorar.
+Scanner é uma ferramenta web de auditoria de segurança focada em ambientes próprios. Foi desenvolvida pensando em um problema real: desenvolvedores que constroem sistemas rapidamente muitas vezes com auxílio de IA e acabam deixando brechas de configuração que um atacante poderia explorar.
 
-Diferente de ferramentas como Nmap, o Scanner-Pro não exige conhecimento técnico avançado. O resultado é apresentado em português, com contexto explicativo e classificação visual de risco tornando a auditoria de segurança acessível para qualquer desenvolvedor.
+Diferente de ferramentas como Nmap, o Scanner não exige conhecimento técnico avançado. O resultado é apresentado em português, com contexto explicativo e classificação visual de risco tornando a auditoria de segurança acessível para qualquer desenvolvedor.
 
 ---
 
@@ -30,7 +30,7 @@ Um desenvolvedor que sobe uma API para produção em um fim de semana provavelme
 - Não configurou nenhum header de segurança HTTP
 - O painel `/admin` está acessível sem autenticação
 
-O Scanner-Pro identifica essas brechas e explica o que cada uma significa — sem jargão técnico.
+O Scanner identifica essas brechas e explica o que cada uma significa — sem jargão técnico.
 
 ---
 
@@ -92,8 +92,8 @@ O Scanner-Pro identifica essas brechas e explica o que cada uma significa — se
 
 ```bash
 # Clone o repositório
-git clone https://github.com/Samusoares7/Scanner-Pro.git
-cd Scanner-Pro/backend
+git clone https://github.com/Samusoares7/Scanner.git
+cd Scanner/backend
 
 # Instale as dependências
 pip install -r requirements.txt
@@ -108,7 +108,7 @@ Documentação: http://127.0.0.1:8000/docs
 ### Frontend
 
 ```bash
-cd Scanner-Pro/frontend
+cd Scanner/frontend
 
 # Instale as dependências
 npm install
@@ -127,7 +127,7 @@ Senha:   admin123
 
 ## 📁 Estrutura do Projeto
 ```text
-Scanner-Pro/
+Scanner/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py          # Entrada da aplicação + CORS
