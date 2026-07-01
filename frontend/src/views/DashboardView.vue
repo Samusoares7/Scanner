@@ -369,4 +369,40 @@ tr:last-child td { border-bottom: none; }
 .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
 .btn-cancel { padding: 8px 20px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-secondary); cursor: pointer; }
 .btn-confirm { padding: 8px 20px; background: var(--critical); border: none; border-radius: 8px; color: white; cursor: pointer; }
+
+/* ── Tablet ── */
+@media (max-width: 1024px) {
+  .metrics { grid-template-columns: repeat(3, 1fr); }
+  .context-cell { max-width: 200px; }
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .page { padding: 16px; }
+  .topbar { flex-direction: column; gap: 12px; }
+  .page-title { font-size: 1.3rem; }
+  .metrics { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .metric-card { padding: 14px; }
+  .metric-value { font-size: 1.5rem; }
+  .section { padding: 16px; }
+  .section-header { flex-direction: column; gap: 12px; }
+  .section-actions { width: 100%; }
+  .btn-new, .btn-clear { flex: 1; justify-content: center; text-align: center; }
+  .scan-header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px 14px; }
+  .scan-right { flex-wrap: wrap; gap: 6px; }
+  .scan-body { overflow-x: auto; }
+  .scan-body table { min-width: 500px; }
+  th, td { padding: 10px 12px; font-size: 0.78rem; }
+  .context-cell { max-width: 150px; }
+  .modal { padding: 24px; }
+}
+
+/* ── Small phone ── */
+@media (max-width: 480px) {
+  .page { padding: 12px; }
+  .metrics { grid-template-columns: 1fr; }
+  .metric-card { flex-direction: row; align-items: center; gap: 14px; }
+  .metric-icon { width: 36px; height: 36px; font-size: 1rem; }
+  .metric-value { font-size: 1.3rem; }
+}
 </style>
