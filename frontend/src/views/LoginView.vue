@@ -642,12 +642,30 @@ const doLogin = async () => {
 }
 
 /* ── Responsive ── */
+@media (max-width: 1024px) {
+  .login-container {
+    gap: 32px;
+    padding: 32px 24px;
+  }
+  .headline { font-size: 1.9rem; }
+  .terminal-body { height: 140px; }
+}
+
 @media (max-width: 900px) {
   .login-container {
     grid-template-columns: 1fr;
     padding: 24px 16px;
+    max-width: 520px;
   }
   .login-left { display: none; }
   .form-card { max-width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .login-container { padding: 16px 12px; }
+  .form-card { padding: 24px 20px; border-radius: 16px; }
+  .form-title { font-size: 1.4rem; }
+  .btn-submit { padding: 12px; font-size: 0.88rem; }
+  .form-sub { margin-bottom: 20px; }
 }
 </style>

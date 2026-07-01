@@ -1,5 +1,15 @@
 <template>
-  <aside class="sidebar">
+  <!-- Mobile overlay -->
+  <div class="sidebar-overlay" :class="{ visible: mobileOpen }" @click="closeMobile"></div>
+
+  <!-- Mobile hamburger button -->
+  <button class="mobile-toggle" @click="mobileOpen = !mobileOpen" aria-label="Menu">
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+  </button>
+
+  <aside class="sidebar" :class="{ open: mobileOpen }">
     <!-- Logo -->
     <div class="sidebar-logo">
       <div class="logo-icon">🛡️</div>
@@ -11,19 +21,19 @@
 
     <!-- Navegação -->
     <nav class="sidebar-nav">
-      <router-link to="/dashboard" class="nav-item">
+      <router-link to="/dashboard" class="nav-item" @click="closeMobile">
         <span class="nav-icon">📊</span>
         <span>Dashboard</span>
       </router-link>
-      <router-link to="/scanner" class="nav-item">
+      <router-link to="/scanner" class="nav-item" @click="closeMobile">
         <span class="nav-icon">🔍</span>
         <span>Scanner</span>
       </router-link>
-      <router-link to="/alvos" class="nav-item">
+      <router-link to="/alvos" class="nav-item" @click="closeMobile">
         <span class="nav-icon">🎯</span>
         <span>Alvos</span>
       </router-link>
-      <router-link to="/relatorios" class="nav-item">
+      <router-link to="/relatorios" class="nav-item" @click="closeMobile">
         <span class="nav-icon">📄</span>
         <span>Relatórios</span>
       </router-link>
@@ -71,10 +81,16 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const props = defineProps({ stats: Object })
 const router = useRouter()
+const mobileOpen = ref(false)
+
+const closeMobile = () => {
+  mobileOpen.value = false
+}
 
 const logout = () => {
   localStorage.removeItem('token')
@@ -188,4 +204,82 @@ const logout = () => {
 .risk-bar-fill.attention { background: var(--attention); }
 .risk-bar-fill.common { background: var(--common); }
 .risk-pct { font-size: 0.7rem; color: var(--text-secondary); width: 30px; text-align: right; }
+
+/* ── Mobile overlay ── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* ── Hamburger button ── */
+.mobile-toggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 101;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+  transition: background 0.2s;
+}
+.mobile-toggle:hover { background: var(--bg-tertiary); }
+.hamburger-line {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+/* ── Tablet: ≤ 1024px ── */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 220px;
+    padding: 20px 12px;
+  }
+  .risk-distribution { display: none; }
+}
+
+/* ── Mobile: ≤ 768px ── */
+@media (max-width: 768px) {
+  .mobile-toggle {
+    display: flex;
+  }
+  .sidebar-overlay {
+    display: block;
+  }
+  .sidebar-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .sidebar {
+    width: 280px;
+    padding: 24px 16px;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  }
+  .risk-distribution { display: block; }
+}
 </style>

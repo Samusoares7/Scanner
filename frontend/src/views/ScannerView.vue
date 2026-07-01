@@ -310,4 +310,27 @@ tr:hover td { background: #1e2d4a20; }
 .empty-icon { font-size: 3rem; }
 .empty-title { font-size: 1.1rem; font-weight: 600; }
 .empty-sub { color: var(--text-secondary); font-size: 0.85rem; }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .page { padding: 16px; }
+  .page-title { font-size: 1.3rem; }
+  .score-card { flex-direction: column; text-align: center; gap: 16px; padding: 20px; }
+  .score-circle { align-self: center; }
+  .result-stats { flex-wrap: wrap; gap: 8px; padding: 16px; }
+  .stat-item { flex: 1 1 calc(50% - 8px); min-width: 0; }
+  .result-table { overflow-x: auto; }
+  .result-table table { min-width: 550px; }
+  th, td { padding: 10px 12px; font-size: 0.78rem; }
+  .context-cell { max-width: 150px; }
+  .empty-panel { padding: 40px 20px; }
+  .btn-scan { align-self: stretch; justify-content: center; }
+}
+
+/* ── Small phone ── */
+@media (max-width: 480px) {
+  .page { padding: 12px; }
+  .stat-item { flex: 1 1 100%; }
+  .score-num { font-size: 1.5rem; }
+}
 </style>

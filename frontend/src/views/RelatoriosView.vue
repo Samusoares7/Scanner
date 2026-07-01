@@ -129,4 +129,22 @@ const exportPDF = async () => {
 .summary-lbl { font-size: 0.72rem; color: var(--text-secondary); }
 .summary-item.critical .summary-val { color: var(--critical); }
 .summary-item.attention .summary-val { color: var(--attention); }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .page { padding: 16px; }
+  .page-title { font-size: 1.3rem; }
+  .report-card { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
+  .report-icon { font-size: 2rem; }
+  .btn-export { width: 100%; text-align: center; }
+  .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .summary-val { font-size: 1.2rem; }
+  .stats-summary { padding: 20px; }
+}
+
+/* ── Small phone ── */
+@media (max-width: 480px) {
+  .page { padding: 12px; }
+  .summary-grid { grid-template-columns: 1fr; }
+}
 </style>

@@ -117,4 +117,21 @@ onMounted(async () => {
 .empty-title { font-size: 1.1rem; font-weight: 600; }
 .empty-sub { color: var(--text-secondary); font-size: 0.85rem; }
 .btn-start { padding: 10px 20px; background: var(--accent-blue); border: none; border-radius: 8px; color: white; font-size: 0.85rem; cursor: pointer; text-decoration: none; margin-top: 8px; }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .page { padding: 16px; }
+  .page-title { font-size: 1.3rem; }
+  .targets-grid { grid-template-columns: 1fr; gap: 12px; }
+  .target-card { padding: 16px; }
+  .target-name { font-size: 0.82rem; }
+  .target-stats { gap: 12px; }
+  .tstat-val { font-size: 1.1rem; }
+  .empty-panel { padding: 40px 20px; }
+}
+
+/* ── Small phone ── */
+@media (max-width: 480px) {
+  .page { padding: 12px; }
+}
 </style>

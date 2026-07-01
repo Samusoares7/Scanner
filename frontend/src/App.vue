@@ -80,4 +80,19 @@ body {
   background: var(--bg-primary);
   overflow-y: auto;
 }
+
+/* ── Tablet ── */
+@media (max-width: 1024px) {
+  .app-main {
+    margin-left: 220px;
+  }
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .app-main {
+    margin-left: 0;
+    padding-top: 60px;
+  }
+}
 </style>
