@@ -1,4 +1,4 @@
-# 🔐 Scanner-Pro
+# 🔐 Scanner
 ### Plataforma de Auditoria de Segurança Web
 
 > Encontre brechas na sua infraestrutura antes que outros encontrem.
